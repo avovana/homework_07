@@ -15,3 +15,5 @@ BOOST_AUTO_TEST_CASE(input_argument)
 {
     BOOST_STATIC_ASSERT(true == false);
 }
+
+BOOST_AUTO_TEST_SUITE_END()
