@@ -6,6 +6,15 @@
 #include <cstdlib>
 #include <fstream>
 #include <chrono>
+#include <utility>
+#include <tuple>
+
+using Package = std::pair<std::string, std::chrono::system_clock::duration>;
+
+class Reporter {
+public:
+  virtual void output(const Package& package) = 0;
+};
 
 class PackageManager
 {
@@ -24,7 +33,7 @@ public:
         if (brackets == 0)
         {
           if (packageStorage.empty())
-            firstPackageOfTheBulkCameTime = std::chrono::system_clock::now();
+            firstCommandTime = std::chrono::system_clock::now();
 
           packageStorage.push_back(line);
 
@@ -43,7 +52,7 @@ public:
         if (brackets == 1)
         {
           outputStorage();
-          firstPackageOfTheBulkCameTime = std::chrono::system_clock::now();
+          firstCommandTime = std::chrono::system_clock::now();
         }
       }
       else if (line == "}")
@@ -55,15 +64,22 @@ public:
       }
     }
 
-    if(brackets == 0)
+    if (brackets == 0)
       outputStorage();
   }
 
-  void setBulkSize(std::size_t bulkSize) {
-    this->bulkSize = bulkSize;
+  void subscribe(Reporter *obs) {
+    subs.push_back(obs);
   }
 
 private:
+  std::vector<Reporter *> subs;
+
+  void notify(Package& package) {
+    for (auto s : subs)
+      s->output(package);
+  }
+
   auto createPackage() {
     std::ostringstream oss;
 
@@ -76,19 +92,7 @@ private:
         oss << ", ";
     }
 
-    return oss.str();
-  }
-
-  void saveToFile(std::string package) {
-    std::chrono::system_clock::duration dtn = firstPackageOfTheBulkCameTime.time_since_epoch();
-
-    auto timeStamp = dtn.count();
-    std::string fileName = "bulk" + std::to_string(timeStamp) + ".log";
-
-    std::ofstream myfile;
-    myfile.open(fileName);
-    myfile << package;
-    myfile.close();
+    return Package{ oss.str(), firstCommandTime.time_since_epoch() };
   }
 
   void outputStorage() {
@@ -96,24 +100,56 @@ private:
       return;
 
     auto package = createPackage();
-    std::cout << package << '\n';
-
-    saveToFile(package);
+    notify(package);
 
     packageStorage.clear();
   }
 
-  std::size_t bulkSize;
+  std::size_t bulkSize{};
   std::vector<std::string> packageStorage;
-  std::size_t brackets{ 0 };
-  std::chrono::system_clock::time_point firstPackageOfTheBulkCameTime;
+  std::size_t brackets{};
+  std::chrono::system_clock::time_point firstCommandTime;
+};
+
+class ConsoleHandler : Reporter {
+public:
+  ConsoleHandler(PackageManager* manager) {
+    if (manager)
+      manager->subscribe(this);
+  }
+
+  void output(const Package& package) override {
+    std::cout << package.first << '\n';
+  }
+};
+
+class FileHandler : Reporter {
+public:
+  FileHandler(PackageManager* manager) {
+    if (manager)
+      manager->subscribe(this);
+  }
+
+  void output(const Package& package) override {
+    std::chrono::system_clock::duration firstCommandTime;
+    std::string pack;
+
+    std::tie(pack, firstCommandTime) = package;
+
+    std::string fileName = "bulk" + std::to_string(firstCommandTime.count()) + ".log";
+
+    std::ofstream myfile;
+    myfile.open(fileName);
+    myfile << pack;
+    myfile.close();
+  }
 };
 
 int main(int argc, char* argv[])
 {
   try
   {
-    std::size_t bulkSize = 3;
+    std::size_t bulkSize = 2;
 
     if (argc == 2)
       bulkSize = atoi(argv[1]);
@@ -121,6 +157,9 @@ int main(int argc, char* argv[])
       throw std::invalid_argument("Invalid input");
 
     PackageManager manager{ bulkSize };
+
+    ConsoleHandler ch(&manager);
+    FileHandler fh(&manager);
 
     manager.run();
   }
