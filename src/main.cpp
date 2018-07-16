@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
         if (argc == 2)
             bulkSize = atoi(argv[1]);
         else
-            throw std::invalid_argument("Invalid input");
+            ;//throw std::invalid_argument("Invalid input");
 
         PackageManager manager{ bulkSize };
 
