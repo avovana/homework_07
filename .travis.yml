@@ -8,6 +8,7 @@ before_script:
 script:
   - cmake -H. -BBuild
   - cmake --build Build
+  - cmake --build Build --target test
   - cmake --build Build --target package
 deploy:
   - provider: script
