@@ -1,13 +1,11 @@
-#include <iostream>
+#pragma once
+
 #include <cstdlib>
 #include <vector>
 #include <string>
 #include <sstream>
-#include <cstdlib>
-#include <fstream>
 #include <chrono>
 #include <utility>
-#include <tuple>
 
 using Package = std::pair<std::string, std::chrono::system_clock::duration>;
 
@@ -113,61 +111,3 @@ class PackageManager
     std::size_t brackets{};
     std::chrono::system_clock::time_point firstCommandTime;
 };
-
-class ConsoleHandler : Reporter {
-    public:
-    ConsoleHandler(PackageManager* manager) {
-        if(manager)
-            manager->subscribe(this);
-    }
-
-    void output(const Package& package) override {
-        std::cout << package.first << '\n';
-    }
-};
-
-class FileHandler : Reporter {
-    public:
-    FileHandler(PackageManager* manager) {
-        if(manager)
-            manager->subscribe(this);
-    }
-
-    void output(const Package& package) override {
-        std::chrono::system_clock::duration firstCommandTime;
-        std::string pack;
-
-        std::tie(pack, firstCommandTime) = package;
-
-        std::string fileName = "bulk" + std::to_string(firstCommandTime.count()) + ".log";
-
-        std::ofstream myfile;
-        myfile.open(fileName);
-        myfile << pack;
-        myfile.close();
-    }
-};
-
-int main(int argc, char* argv[])
-{
-    try
-    {
-        std::size_t bulkSize = 2;
-
-        if (argc == 2)
-            bulkSize = atoi(argv[1]);
-        else
-            throw std::invalid_argument("Invalid input");
-
-        PackageManager manager{ bulkSize };
-
-        ConsoleHandler ch(&manager);
-        FileHandler fh(&manager);
-
-        manager.run();
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << e.what() << std::endl;
-    }
-}
