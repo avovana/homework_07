@@ -24,48 +24,14 @@ class PackageManager
     { }
 
     void run() {
-        std::string line;
-        while (getline(std::cin, line))
-        {
-            std::size_t foundCmd = line.find_first_of("cmd");
-            if (foundCmd != std::string::npos)
-            {
-                if (brackets == 0)
-                {
-                    if (packageStorage.empty())
-                        firstCommandTime = std::chrono::system_clock::now();
+        std::string cmd;
 
-                    packageStorage.push_back(line);
-
-                    if (packageStorage.size() == bulkSize)
-                        outputStorage();
-                }
-                else
-                {
-                    packageStorage.push_back(line);
-                }
-            }
-            else if (line == "{")
-            {
-                ++brackets;
-
-                if (brackets == 1)
-                {
-                    outputStorage();
-                    firstCommandTime = std::chrono::system_clock::now();
-                }
-            }
-            else if (line == "}")
-            {
-                --brackets;
-
-                if (brackets == 0)
-                    outputStorage();
-            }
+        while (getline(std::cin, cmd)) {
+            proceedCommand(cmd);
         }
 
         if (brackets == 0)
-            outputStorage();
+            outputPackage();
     }
 
     void subscribe(Reporter *obs) {
@@ -73,6 +39,44 @@ class PackageManager
     }
 
     private:
+    void proceedCommand(std::string cmd) {
+        std::size_t foundCmd = cmd.find_first_of("cmd");
+        if (foundCmd != std::string::npos)
+        {
+            if (brackets == 0)
+            {
+                if (packageStorage.empty())
+                    firstCommandTime = std::chrono::system_clock::now();
+
+                packageStorage.push_back(cmd);
+
+                if (packageStorage.size() == bulkSize)
+                    outputPackage();
+            }
+            else
+            {
+                packageStorage.push_back(cmd);
+            }
+        }
+        else if (cmd == "{")
+        {
+            ++brackets;
+
+            if (brackets == 1)
+            {
+                outputPackage();
+                firstCommandTime = std::chrono::system_clock::now();
+            }
+        }
+        else if (cmd == "}")
+        {
+            --brackets;
+
+            if (brackets == 0)
+                outputPackage();
+        }
+    }
+
     std::vector<Reporter *> subs;
 
     void notify(Package& package) {
@@ -84,8 +88,7 @@ class PackageManager
         std::ostringstream oss;
 
         oss << "bulk: ";
-        for (std::size_t i = 0; i < packageStorage.size(); ++i)
-        {
+        for (std::size_t i = 0; i < packageStorage.size(); ++i) {
             oss << packageStorage[i];
 
             if (i + 1 != packageStorage.size())
@@ -95,7 +98,7 @@ class PackageManager
         return Package{ oss.str(), firstCommandTime.time_since_epoch() };
     }
 
-    void outputStorage() {
+    void outputPackage() {
         if (packageStorage.empty())
             return;
 
@@ -114,7 +117,7 @@ class PackageManager
 class ConsoleHandler : Reporter {
     public:
     ConsoleHandler(PackageManager* manager) {
-        if (manager)
+        if(manager)
             manager->subscribe(this);
     }
 
@@ -126,7 +129,7 @@ class ConsoleHandler : Reporter {
 class FileHandler : Reporter {
     public:
     FileHandler(PackageManager* manager) {
-        if (manager)
+        if(manager)
             manager->subscribe(this);
     }
 
