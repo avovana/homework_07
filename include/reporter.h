@@ -43,6 +43,7 @@ class FileHandler : Reporter {
         std::tie(pack, firstCommandTime) = package;
 
         std::string fileName = "bulk" + std::to_string(firstCommandTime.count()) + ".log";
+        oss << fileName;
 
         std::ofstream myfile;
         myfile.open(fileName);
