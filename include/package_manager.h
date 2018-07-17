@@ -12,7 +12,7 @@ using Package = std::pair<std::string, std::chrono::system_clock::duration>;
 
 class Reporter {
     public:
-    virtual void output(const Package& package) = 0;
+    virtual void output(const Package& package, std::ostringstream& oss) = 0;
 };
 
 class PackageManager
@@ -79,8 +79,10 @@ class PackageManager
     std::vector<Reporter *> subs;
 
     void notify(Package& package) {
-        for (auto s : subs)
-            s->output(package);
+        for (auto s : subs) {
+            auto oss = std::ostringstream{};
+            s->output(package, oss);
+        }
     }
 
     auto createPackage() {

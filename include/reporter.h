@@ -5,6 +5,7 @@
 #include <string>
 #include <chrono>
 #include <fstream>
+#include <sstream>
 
 using Package = std::pair<std::string, std::chrono::system_clock::duration>;
 
@@ -13,27 +14,29 @@ class Reporter;
 
 class ConsoleHandler : Reporter {
     public:
-    ConsoleHandler(PackageManager* manager) {
+    ConsoleHandler(PackageManager* manager = nullptr) {
         if(manager)
             manager->subscribe(this);
     }
 
-    void output(const Package& package) override {
+    void output(const Package& package, std::ostringstream& oss) override {
         std::string pack;
         
         std::tie(pack, std::ignore) = package;
-        std::cout << pack << '\n';
+        oss << pack;
+
+        std::cout << oss.str() << '\n';
     }
 };
 
 class FileHandler : Reporter {
     public:
-    FileHandler(PackageManager* manager) {
+    FileHandler(PackageManager* manager = nullptr) {
         if(manager)
             manager->subscribe(this);
     }
 
-    void output(const Package& package) override {
+    void output(const Package& package, std::ostringstream& oss) override {
         std::chrono::system_clock::duration firstCommandTime;
         std::string pack;
         
