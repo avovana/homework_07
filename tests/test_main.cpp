@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(console_handler_output)
     BOOST_CHECK_EQUAL(oss.str(), commands);
 }
 
-BOOST_AUTO_TEST_CASE(console_handler_output)
+BOOST_AUTO_TEST_CASE(file_handler_output)
 {
     FileHandler fh;
 
